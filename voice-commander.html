@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Commander</title>
+<style>
+  :root{
+    --bg1:#0f0c29;
+    --bg2:#302b63;
+    --bg3:#24243e;
+    --accent:#00e5ff;
+    --accent2:#7b2ff7;
+    --card:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:30px 16px 60px;
+  }
+  h1{
+    font-size:1.6rem;
+    margin-bottom:4px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    text-align:center;
+  }
+  p.sub{
+    color:#c8c8e0;
+    margin-top:0;
+    font-size:0.9rem;
+    text-align:center;
+    max-width:420px;
+  }
+  #micBtn{
+    margin-top:22px;
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    background:radial-gradient(circle at 30% 30%, var(--accent), var(--accent2));
+    box-shadow:0 0 0 0 rgba(0,229,255,0.5);
+    color:#fff;
+    font-size:2.2rem;
+    transition:transform .15s ease;
+  }
+  #micBtn:active{transform:scale(0.94);}
+  #micBtn.listening{
+    animation:pulse 1.4s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(0,229,255,0.55);}
+    70%{box-shadow:0 0 0 28px rgba(0,229,255,0);}
+    100%{box-shadow:0 0 0 0 rgba(0,229,255,0);}
+  }
+  #status{
+    margin-top:16px;
+    font-size:0.95rem;
+    color:var(--accent);
+    min-height:20px;
+    text-align:center;
+  }
+  #transcript{
+    margin-top:10px;
+    font-size:1.05rem;
+    font-weight:600;
+    min-height:26px;
+    text-align:center;
+    max-width:90%;
+    word-wrap:break-word;
+  }
+  .card{
+    margin-top:28px;
+    width:100%;
+    max-width:560px;
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:16px;
+    padding:18px 20px;
+    backdrop-filter:blur(6px);
+  }
+  .card h2{
+    margin:0 0 10px;
+    font-size:1rem;
+    color:var(--accent);
+  }
+  .cmd-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px 14px;
+    font-size:0.85rem;
+    color:#dcdcf5;
+  }
+  .cmd-list b{color:#fff;}
+  #log{
+    margin-top:18px;
+    width:100%;
+    max-width:560px;
+    max-height:180px;
+    overflow-y:auto;
+    font-size:0.82rem;
+    color:#b8b8d8;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  #log div{
+    background:rgba(255,255,255,0.04);
+    padding:6px 10px;
+    border-radius:8px;
+    border-left:3px solid var(--accent);
+  }
+  #unsupported{
+    margin-top:24px;
+    background:#3a1414;
+    border:1px solid #ff6b6b;
+    padding:14px 18px;
+    border-radius:10px;
+    max-width:500px;
+    text-align:center;
+    display:none;
+  }
+  select{
+    margin-top:14px;
+    background:var(--card);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.2);
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎙️ Voice Commander</h1>
+<p class="sub">Tap the mic and speak a command. Works best in Chrome/Edge on desktop or Android.</p>
+
+<label style="margin-top:10px;font-size:0.8rem;color:#c8c8e0;">
+  Language:
+  <select id="langSelect">
+    <option value="en-US">English (US)</option>
+    <option value="en-GB">English (UK)</option>
+    <option value="hi-IN">Hindi</option>
+    <option value="es-ES">Spanish</option>
+  </select>
+</label>
+
+<button id="micBtn" title="Click and speak">🎤</button>
+<div id="status">Click the mic to start</div>
+<div id="transcript"></div>
+
+<div class="card">
+  <h2>Try saying things like:</h2>
+  <div class="cmd-list">
+    <div><b>"Open YouTube"</b></div>
+    <div><b>"Open Google"</b></div>
+    <div><b>"Open Gmail"</b></div>
+    <div><b>"Open Facebook"</b></div>
+    <div><b>"Open Twitter"</b></div>
+    <div><b>"Open Instagram"</b></div>
+    <div><b>"Open WhatsApp"</b></div>
+    <div><b>"Open Maps"</b></div>
+    <div><b>"Open Amazon"</b></div>
+    <div><b>"Open Wikipedia"</b></div>
+    <div><b>"Search hello"</b></div>
+    <div><b>"Search hello on YouTube"</b></div>
+    <div><b>"YouTube search hello"</b></div>
+    <div><b>"What time is it"</b></div>
+    <div><b>"Stop listening"</b></div>
+  </div>
+</div>
+
+<div id="log"></div>
+
+<div id="unsupported">
+  Your browser doesn't support voice recognition (Web Speech API).
+  Please try the latest <b>Chrome</b> or <b>Edge</b> browser.
+</div>
+
+<script>
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micBtn = document.getElementById('micBtn');
+const statusEl = document.getElementById('status');
+const transcriptEl = document.getElementById('transcript');
+const logEl = document.getElementById('log');
+const langSelect = document.getElementById('langSelect');
+const unsupportedEl = document.getElementById('unsupported');
+
+if (!SpeechRecognition) {
+  unsupportedEl.style.display = 'block';
+  micBtn.disabled = true;
+  micBtn.style.opacity = 0.4;
+  statusEl.textContent = 'Voice recognition not supported here';
+} else {
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = langSelect.value;
+
+  let listening = false;
+
+  langSelect.addEventListener('change', () => {
+    recognition.lang = langSelect.value;
+  });
+
+  micBtn.addEventListener('click', () => {
+    if (listening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (e) { /* already started */ }
+    }
+  });
+
+  recognition.onstart = () => {
+    listening = true;
+    micBtn.classList.add('listening');
+    statusEl.textContent = 'Listening... speak a command';
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    micBtn.classList.remove('listening');
+    statusEl.textContent = 'Click the mic to start';
+  };
+
+  recognition.onerror = (event) => {
+    statusEl.textContent = 'Error: ' + event.error;
+  };
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    let final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const text = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        final += text;
+      } else {
+        interim += text;
+      }
+    }
+    transcriptEl.textContent = final || interim;
+    if (final) {
+      handleCommand(final.trim());
+    }
+  };
+
+  // ---- Site map for "open X" ----
+  const siteMap = {
+    'youtube': 'https://www.youtube.com',
+    'you tube': 'https://www.youtube.com',
+    'google': 'https://www.google.com',
+    'gmail': 'https://mail.google.com',
+    'email': 'https://mail.google.com',
+    'facebook': 'https://www.facebook.com',
+    'twitter': 'https://www.twitter.com',
+    'x': 'https://www.x.com',
+    'instagram': 'https://www.instagram.com',
+    'whatsapp': 'https://web.whatsapp.com',
+    'maps': 'https://maps.google.com',
+    'google maps': 'https://maps.google.com',
+    'amazon': 'https://www.amazon.com',
+    'wikipedia': 'https://www.wikipedia.org',
+    'netflix': 'https://www.netflix.com',
+    'spotify': 'https://open.spotify.com',
+    'reddit': 'https://www.reddit.com',
+    'linkedin': 'https://www.linkedin.com',
+    'github': 'https://www.github.com',
+    'drive': 'https://drive.google.com',
+    'google drive': 'https://drive.google.com',
+    'calendar': 'https://calendar.google.com',
+    'translate': 'https://translate.google.com',
+    'news': 'https://news.google.com'
+  };
+
+  // ---- Search-engine map for "search X on Y" ----
+  const searchEngines = {
+    'youtube': q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+    'google': q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    'amazon': q => `https://www.amazon.com/s?k=${encodeURIComponent(q)}`,
+    'wikipedia': q => `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`,
+    'maps': q => `https://www.google.com/maps/search/${encodeURIComponent(q)}`
+  };
+
+  function logLine(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    logEl.prepend(div);
+  }
+
+  function openUrl(url) {
+    window.open(url, '_blank');
+  }
+
+  function handleCommand(raw) {
+    const cmd = raw.toLowerCase().trim().replace(/[.!?]+$/, '');
+    logLine('🗣️ ' + raw);
+
+    // Stop listening
+    if (/^stop( listening)?$/.test(cmd)) {
+      recognition.stop();
+      logLine('🛑 Stopped listening');
+      return;
+    }
+
+    // Time
+    if (/what('?s| is) the time|what time is it/.test(cmd)) {
+      const now = new Date();
+      const msg = 'Current time is ' + now.toLocaleTimeString();
+      logLine('⏰ ' + msg);
+      statusEl.textContent = msg;
+      return;
+    }
+
+    // "search X on Y" or "Y search X"
+    let m = cmd.match(/^search (.+?) on (\w+)$/) || cmd.match(/^(\w+) search (.+)$/);
+    if (m) {
+      let query, engine;
+      if (cmd.startsWith('search')) {
+        query = m[1]; engine = m[2];
+      } else {
+        engine = m[1]; query = m[2];
+      }
+      const engineKey = Object.keys(searchEngines).find(k => engine.includes(k));
+      if (engineKey) {
+        openUrl(searchEngines[engineKey](query));
+        logLine(`🔍 Searching "${query}" on ${engineKey}`);
+        return;
+      }
+    }
+
+    // plain "search X" -> google
+    m = cmd.match(/^search (?:for )?(.+)$/);
+    if (m) {
+      openUrl(searchEngines['google'](m[1]));
+      logLine(`🔍 Searching "${m[1]}" on Google`);
+      return;
+    }
+
+    // "open X"
+    m = cmd.match(/^(?:open|launch|start|go to) (.+)$/);
+    if (m) {
+      const target = m[1].trim();
+      const key = Object.keys(siteMap).find(k => target.includes(k));
+      if (key) {
+        openUrl(siteMap[key]);
+        logLine('🚀 Opening ' + key);
+        return;
+      } else {
+        // fallback: try as a direct URL / google search of the app name
+        openUrl(searchEngines['google'](target));
+        logLine(`❓ Unknown app "${target}" — searching it on Google`);
+        return;
+      }
+    }
+
+    logLine('🤷 Command not recognized: "' + raw + '"');
+  }
+}
+</script>
+
+</body>
+</html>
