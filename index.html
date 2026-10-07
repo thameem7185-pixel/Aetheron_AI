@@ -7,7 +7,7 @@
 <meta name="theme-color" id="theme-color" content="#faf7fc">
 <script>
 (function(){var t=null;try{t=localStorage.getItem('aetheron-theme');}catch(e){}
-if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
+if(t!=='light'&&t!=='dark'){t='dark';}
 document.documentElement.setAttribute('data-theme',t);})();
 </script>
 <title>Aetheron</title>
@@ -215,11 +215,7 @@ document.documentElement.setAttribute('data-theme',t);})();
     max-width: 85%; white-space: pre-wrap; word-break: break-word; line-height: 1.55;
     box-shadow: var(--shadow-sm);
   }
-  .msg.assistant { position: relative; padding-left: 42px; }
-  .msg.assistant::before {
-    content: ''; position: absolute; left: 0; top: 3px; width: 28px; height: 28px; border-radius: 50%;
-    background: var(--grad); box-shadow: inset -3px -4px 8px rgba(255,255,255,.45), 0 3px 10px rgba(140,120,240,.3);
-  }
+  .msg.assistant { position: relative; padding-left: 34px; }
   .msg.assistant .bubble { line-height: 1.72; font-size: 1rem; white-space: pre-wrap; word-break: break-word; padding-top: 2px; }
   .bubble.error { color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); padding: 10px 14px; border-radius: 14px; }
 
@@ -300,7 +296,6 @@ document.documentElement.setAttribute('data-theme',t);})();
     .sb-head { display: flex; }
     #scrim { display: block; position: fixed; inset: 0; background: rgba(60,40,100,.28); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .28s; z-index: 20; }
     body.sidebar-open #scrim { opacity: 1; pointer-events: auto; }
-    .msg.assistant { padding-left: 38px; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 
@@ -312,12 +307,6 @@ document.documentElement.setAttribute('data-theme',t);})();
   #app { position: relative; z-index: 1; }
   #aurora {
     display: none; position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
-    background-image:
-      radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,.55), transparent),
-      radial-gradient(1px 1px at 90px 85px, rgba(255,255,255,.35), transparent),
-      radial-gradient(1.5px 1.5px at 150px 22px, rgba(200,190,255,.5), transparent),
-      radial-gradient(1px 1px at 60px 110px, rgba(255,255,255,.3), transparent);
-    background-size: 190px 130px;
   }
   :root[data-theme="dark"] #aurora { display: block; }
   #aurora::before, #aurora::after { content: ''; position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%; filter: blur(90px); opacity: .32; }
@@ -327,7 +316,6 @@ document.documentElement.setAttribute('data-theme',t);})();
   @keyframes drift2 { to { transform: translate(-16vmax, -12vmax) scale(1.1); } }
 
   :root[data-theme="dark"] .orb { box-shadow: 0 0 60px rgba(140,120,255,.55), 0 0 120px rgba(80,150,255,.25), inset -6px -8px 18px rgba(255,255,255,.25); }
-  :root[data-theme="dark"] .msg.assistant::before { box-shadow: 0 0 14px rgba(150,130,255,.65), inset -3px -4px 8px rgba(255,255,255,.35); }
   :root[data-theme="dark"] .brand::before { box-shadow: 0 0 12px rgba(150,130,255,.7), inset -2px -3px 6px rgba(255,255,255,.35); }
   :root[data-theme="dark"] .new-chat { box-shadow: 0 0 22px rgba(130,110,255,.4); }
   :root[data-theme="dark"] #send-btn:not(:disabled) { box-shadow: 0 0 18px rgba(130,110,255,.6); }
@@ -340,10 +328,62 @@ document.documentElement.setAttribute('data-theme',t);})();
   :root[data-theme="dark"] #sidebar { background: rgba(26,24,35,.78); }
   :root[data-theme="dark"] .dots i { box-shadow: 0 0 8px rgba(150,130,255,.8); }
   :root[data-theme="dark"] #welcome h1 { filter: drop-shadow(0 0 18px rgba(150,130,255,.35)); }
+
+  /* ── live typing ball ── */
+  .type-ball { display: inline-block; width: 14px; height: 14px; margin-left: 4px; border-radius: 50%; vertical-align: -1px;
+    background: var(--grad); box-shadow: 0 0 12px rgba(120,100,240,.65), inset -2px -3px 5px rgba(255,255,255,.4); animation: ballpulse 1s ease-in-out infinite; }
+  @keyframes ballpulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.8); opacity: .75; } }
+  .type-ball.end { width: 13px; height: 13px; margin-left: 6px; animation: none; opacity: 1; }
+  .think-ball { padding: 8px 0; }
+  .think-ball .type-ball { width: 16px; height: 16px; margin: 0; }
+  :root[data-theme="dark"] .type-ball { box-shadow: 0 0 14px rgba(150,130,255,.9); }
+  .msg-actions.pending { visibility: hidden; }
+
+  /* avatar orb appears only after the reply is finished */
+  .msg.assistant::before { transition: opacity .45s ease, transform .5s cubic-bezier(.3,1.6,.5,1); }
+  .msg.assistant.generating::before { opacity: 0; transform: scale(.3); }
+
+  /* slow-connection note + retry */
+  .think-ball { display: flex; align-items: center; gap: 10px; }
+  .slow-note { font-size: .82rem; color: var(--muted); animation: rise .4s ease both; }
+  .retry-row { margin-top: 10px; }
+  .retry-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px 8px 12px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-size: .88rem; font-weight: 600;
+    transition: transform .15s, box-shadow .15s, filter .15s; }
+  .retry-btn svg { width: 17px; height: 17px; transition: transform .45s cubic-bezier(.3,.8,.3,1); }
+  .retry-btn:hover { box-shadow: 0 6px 16px rgba(120,100,180,.18); }
+  .retry-btn:hover svg { transform: rotate(-180deg); }
+  .retry-btn:active { transform: scale(.96); }
+  :root[data-theme="dark"] .retry-btn { box-shadow: inset 0 0 0 1px rgba(170,158,255,.3); }
+
+  /* ── floating particles (dark mode) ── */
+  #particles { display: none; position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  :root[data-theme="dark"] #particles { display: block; }
+
+  /* the ball in front of the text: pops in once the reply has finished */
+  .msg.assistant::before {
+    content: ''; position: absolute; left: 0; top: 6px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--grad); box-shadow: 0 2px 9px rgba(140,120,240,.4), inset -2px -3px 5px rgba(255,255,255,.45);
+  }
+  :root[data-theme="dark"] .msg.assistant::before { box-shadow: 0 0 14px rgba(150,130,255,.8), inset -2px -3px 5px rgba(255,255,255,.35); }
+  .msg.assistant.err { padding-left: 0; }
+  .msg.assistant.err::before { display: none; }
+
+  /* ── light mode extras: drifting pastel glow, bubbles, shimmering title ── */
+  :root:not([data-theme="dark"]) #aurora { display: block; }
+  :root:not([data-theme="dark"]) #aurora::before { background: radial-gradient(circle, #cdbcff, transparent 65%); opacity: .55; }
+  :root:not([data-theme="dark"]) #aurora::after  { background: radial-gradient(circle, #ffc6df, transparent 65%); opacity: .5; }
+  #particles { display: block; }
+  #welcome h1 { background-size: 220% 100%; animation: shimmer 8s ease-in-out infinite alternate; }
+  @keyframes shimmer { to { background-position: 100% 0; } }
+  :root:not([data-theme="dark"]) .chip { box-shadow: 0 2px 10px rgba(130,110,200,.10); }
+  :root:not([data-theme="dark"]) .msg.user .bubble { box-shadow: 0 4px 16px rgba(130,110,220,.14); }
+  :root:not([data-theme="dark"]) #input-bar { box-shadow: 0 6px 26px rgba(130,110,220,.16), 0 1px 3px rgba(130,110,220,.08); }
 </style>
 </head>
 <body>
 <div id="aurora" aria-hidden="true"></div>
+<canvas id="particles" aria-hidden="true"></canvas>
 
 <div id="app">
   <aside id="sidebar">
@@ -466,6 +506,7 @@ function applyTheme(t) {
   document.getElementById('theme-switch').classList.toggle('on', dark);
   document.getElementById('theme-row').setAttribute('aria-checked', dark);
   document.getElementById('theme-color').setAttribute('content', dark ? '#17151f' : '#faf7fc');
+  if (window.syncParticles) syncParticles();
 }
 function toggleTheme() {
   const t = currentTheme() === 'dark' ? 'light' : 'dark';
@@ -474,12 +515,90 @@ function toggleTheme() {
   showToast(t === 'dark' ? 'Dark mode' : 'Light mode');
 }
 applyTheme(currentTheme());
-if (window.matchMedia) {
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    let saved = null; try { saved = localStorage.getItem('aetheron-theme'); } catch (_) {}
-    if (!saved) applyTheme(e.matches ? 'dark' : 'light');
-  });
-}
+
+
+// ── background particles: glowing stars (dark) / pastel bubbles (light) ──
+(function () {
+  const cv = document.getElementById('particles');
+  const ctx = cv.getContext('2d');
+  const DARK_C  = ['255,255,255', '205,195,255', '165,208,255', '255,196,224'];
+  const LIGHT_C = ['170,150,255', '120,190,255', '255,150,195', '255,195,140', '130,225,185'];
+  let W = 0, H = 0, parts = [], raf = 0, last = 0, t = 0, builtDark = null;
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  function spawn(anywhere) {
+    const dark = isDark();
+    return {
+      x: Math.random() * W,
+      y: anywhere ? Math.random() * H : H + 30,
+      r: dark ? rnd(0.6, 2.3) : rnd(7, 24),
+      vy: dark ? -rnd(6, 22) : -rnd(6, 17),     // px per second, drifting upward
+      sway: dark ? rnd(4, 18) : rnd(8, 26),
+      ph: rnd(0, 6.28),
+      tw: dark ? rnd(0.6, 2.2) : rnd(0.3, 1.1),
+      c: (dark ? DARK_C : LIGHT_C)[(Math.random() * 4.99) | 0]
+    };
+  }
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    builtDark = isDark();
+    const n = builtDark ? Math.round(Math.min(90, Math.max(38, W * H / 13000)))
+                        : Math.round(Math.min(34, Math.max(16, W * H / 30000)));
+    parts = Array.from({ length: n }, () => spawn(true));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of parts) {
+      const wave = 0.5 + 0.5 * Math.sin(t * p.tw + p.ph);
+      const x = p.x + Math.sin(t * 0.35 + p.ph) * p.sway;
+      if (builtDark) {
+        const a = 0.25 + 0.6 * wave;
+        ctx.fillStyle = `rgba(${p.c},${a})`;
+        ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, 6.2832); ctx.fill();
+        if (p.r > 1.3) {                          // soft halo on the bigger ones
+          ctx.fillStyle = `rgba(${p.c},${a * 0.14})`;
+          ctx.beginPath(); ctx.arc(x, p.y, p.r * 4.2, 0, 6.2832); ctx.fill();
+        }
+      } else {                                    // glassy pastel bubble
+        const a = 0.55 + 0.35 * wave;
+        const g = ctx.createRadialGradient(x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.05, x, p.y, p.r);
+        g.addColorStop(0, `rgba(255,255,255,${a * 0.85})`);
+        g.addColorStop(0.5, `rgba(${p.c},${a * 0.28})`);
+        g.addColorStop(1, `rgba(${p.c},${a * 0.12})`);
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, 6.2832); ctx.fill();
+        ctx.strokeStyle = `rgba(${p.c},${a * 0.38})`; ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  }
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now; t += dt;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      p.y += p.vy * dt;
+      if (p.y < -p.r * 5) parts[i] = spawn(false);
+    }
+    draw();
+    raf = requestAnimationFrame(frame);
+  }
+  function sync() {
+    if (!W || builtDark !== isDark()) resize();   // rebuild when the theme flips
+    if (reduce) { draw(); return; }
+    if (!document.hidden && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
+    else if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+  }
+  window.addEventListener('resize', () => { if (W) { resize(); if (reduce) draw(); } });
+  document.addEventListener('visibilitychange', sync);
+  window.syncParticles = sync;
+  sync();
+})();
 
 const modePlaceholders = {
   chat: 'Message ' + APP_NAME,
@@ -658,6 +777,7 @@ function buildAttachmentContext() {
 async function sendMessage() {
   const input = document.getElementById('msg-input');
   const text = input.value.trim();
+  if (isTyping) { skipTyping = true; return; }
   if ((!text && !attachedFiles.length) || isThinking) return;
 
   const pendingFiles = attachedFiles.filter(f => f.isText && !f.loaded);
@@ -1019,46 +1139,171 @@ function setBusy(b) {
   document.getElementById('mic-btn').disabled = b;
 }
 
+
+// ── live typing (text writes itself with a ball at the tip) ──
+let isTyping = false, skipTyping = false;
+const ICON_STOP_TYPING = svgIcon('<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>');
+
+function placeBall(bubble, final) {
+  const ball = document.createElement('span');
+  ball.className = final ? 'type-ball end' : 'type-ball';
+  ball.style.animationDelay = '-' + (performance.now() % 1000).toFixed(0) + 'ms';
+  let t = bubble;
+  for (;;) {
+    let l = t.lastChild;
+    while (l && l.nodeType === 3 && !l.textContent.trim()) l = l.previousSibling;   // skip trailing whitespace
+    if (!l) { t.appendChild(ball); return; }
+    if (l.nodeType === 3) { t.insertBefore(ball, l.nextSibling); return; }          // right after the newest letter
+    if (l.classList.contains('code-wrap')) { t = l.querySelector('pre code') || l; continue; }
+    if (['BR', 'HR', 'PRE'].includes(l.tagName)) { t.insertBefore(ball, l.nextSibling); return; }
+    t = l;
+  }
+}
+
+function typeMessage(content) {
+  return new Promise(resolve => {
+    const win = document.getElementById('chat-window');
+    const sendBtn = document.getElementById('send-btn');
+    const sendHtml = sendBtn.innerHTML;
+    const div = document.createElement('div');
+    div.className = 'msg assistant generating';
+    const uid = ++msgUid;
+    rawMessageStore[uid] = content;
+    div.innerHTML = `<div class="bubble"></div>
+      <div class="msg-actions pending">
+        <button class="icon-btn sm" onclick="copyMessageText(this, ${uid})" title="Copy" aria-label="Copy">${ICON_COPY}</button>
+        <button class="icon-btn sm msg-speak-btn" onclick="speakMessage(this, ${uid})" title="Read aloud" aria-label="Read aloud">${ICON_SPEAK}</button>
+      </div>`;
+    win.appendChild(div);
+    const bubble = div.querySelector('.bubble');
+    const actions = div.querySelector('.msg-actions');
+
+    if (autoVoiceMode) speakText(content, div.querySelector('.msg-speak-btn'));
+
+    // stop button while typing
+    isTyping = true; skipTyping = false;
+    sendBtn.innerHTML = ICON_STOP_TYPING;
+    sendBtn.disabled = false;
+    sendBtn.title = 'Stop';
+    win.style.scrollBehavior = 'auto';
+
+    const total = content.length;
+    const cps = Math.max(90, total / 6);   // chars per second, capped so long replies stay quick
+    let shown = 0, last = performance.now(), lastRender = 0;
+
+    function render(idx) {
+      let part = content.slice(0, idx);
+      if ((part.match(/```/g) || []).length % 2) part += '\n```';
+      bubble.innerHTML = renderMarkdown(part);
+      if (idx < total) placeBall(bubble);
+      if (win.scrollHeight - win.scrollTop - win.clientHeight < 140) win.scrollTop = win.scrollHeight;
+    }
+
+    function frame(now) {
+      if (skipTyping) shown = total;
+      else shown = Math.min(total, shown + (now - last) / 1000 * cps);
+      last = now;
+      const idx = Math.floor(shown);
+      if (idx >= total) {
+        bubble.innerHTML = renderMarkdown(content);
+        actions.classList.remove('pending');
+        div.classList.remove('generating');
+        win.scrollTop = win.scrollHeight;
+        win.style.scrollBehavior = '';
+        sendBtn.innerHTML = sendHtml;
+        sendBtn.title = 'Send';
+        isTyping = false; skipTyping = false;
+        resolve();
+        return;
+      }
+      render(idx);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+const ICON_RETRY = svgIcon('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>');
+
+function showError(msg) {
+  const win = document.getElementById('chat-window');
+  const div = document.createElement('div');
+  div.className = 'msg assistant err';
+  div.innerHTML = `<div class="bubble error">${escHtml(msg)}</div>` +
+    `<div class="retry-row"><button class="retry-btn" onclick="retryLast(this)">${ICON_RETRY}<span>Retry</span></button></div>`;
+  win.appendChild(div);
+  scrollDown();
+  return div;
+}
+
+async function retryLast(btn) {
+  if (isThinking || isTyping) return;
+  const el = btn.closest('.msg');
+  if (el) el.remove();
+  await callCohere();
+}
+
+window.addEventListener('offline', () => showToast("You're offline"));
+window.addEventListener('online',  () => showToast('Back online'));
+
 async function callCohere() {
   setBusy(true);
   const thinkingEl = showThinking();
+  const ctrl = new AbortController();
+  const slowTimer = setTimeout(() => {
+    const n = document.createElement('span');
+    n.className = 'slow-note';
+    n.textContent = 'Slow connection… still trying';
+    const tb = thinkingEl.querySelector('.think-ball');
+    if (tb) tb.appendChild(n);
+  }, 10000);
+  const killTimer = setTimeout(() => ctrl.abort(), 45000);
 
   try {
+    if (!navigator.onLine) throw new Error('offline');
     const lastUserMsg = messages[messages.length - 1]?.content || '';
 
     const resp = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: ctrl.signal,
       body: JSON.stringify({
         message: lastUserMsg,
         systemPrompt: getSystemPrompt()
       })
     });
 
-    thinkingEl.remove();
-
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
       const errMsg = err?.message || err?.error || `HTTP ${resp.status}`;
-      appendMessage('assistant', `Something went wrong: ${errMsg}`, true);
+      thinkingEl.remove();
+      showError(`Something went wrong (${errMsg}).`);
       return;
     }
 
-    const data = await resp.json();
+    const data = await resp.json().catch(() => null);
+    thinkingEl.remove();
+    if (data === null) { showError('The reply came back unreadable. Please try again.'); return; }
+    clearTimeout(killTimer);
     const text = typeof data === 'string' ? data : (data.text || data.message || JSON.stringify(data));
 
     messages.push({ role: 'assistant', content: text });
     msgCount++;
-    appendMessage('assistant', text);
+    await typeMessage(text);
 
   } catch (e) {
     thinkingEl.remove();
-    appendMessage('assistant', `Connection error: ${e.message}`, true);
+    let m;
+    if (!navigator.onLine || e.message === 'offline') m = 'No internet connection. Check your network and try again.';
+    else if (e.name === 'AbortError') m = 'This is taking too long. Your connection may be slow.';
+    else m = "Couldn't reach the server. Check your connection and try again.";
+    showError(m);
   } finally {
+    clearTimeout(slowTimer);
+    clearTimeout(killTimer);
     setBusy(false);
   }
 }
-
 function hideWelcome() {
   const w = document.getElementById('welcome');
   if (w) w.remove();
@@ -1066,8 +1311,8 @@ function hideWelcome() {
 
 function showThinking() {
   const el = document.createElement('div');
-  el.className = 'msg assistant';
-  el.innerHTML = '<div class="dots"><i></i><i></i><i></i></div>';
+  el.className = 'msg assistant generating';
+  el.innerHTML = '<div class="think-ball"><span class="type-ball"></span></div>';
   document.getElementById('chat-window').appendChild(el);
   scrollDown();
   return el;
